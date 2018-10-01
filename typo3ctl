@@ -1,0 +1,26 @@
+#!/usr/bin/env php
+<?php
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
+/**
+ * Command Line Interface module dispatcher
+ * that executes maintenance commands
+ */
+call_user_func(function() use ($argv) {
+    $classLoader = require __DIR__ . '/../../autoload.php';
+    // Fake a path in public directory – currently required by TYPO3 SystemdEnvironmentBuilder
+    $_SERVER['argv'][0] = getenv('TYPO3_PATH_WEB') . '/typo3/sysext/core/bin/typo3';
+    \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::run(1, \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::REQUESTTYPE_CLI);
+    \TYPO3\CMS\Core\Core\Bootstrap::init($classLoader, true)->get(\TYPO3\CMS\Core\Console\CommandApplication::class)->run();
+});
