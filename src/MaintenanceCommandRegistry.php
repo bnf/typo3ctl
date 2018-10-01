@@ -38,8 +38,15 @@ class MaintenanceCommandRegistry extends CommandRegistry
         if ($this->commands) {
             return;
         }
+
+        $configurationFiles = [];
         foreach ($this->packageManager->getActivePackages() as $package) {
-            $commandsOfExtension = $package->getPackagePath() . 'Configuration/Commands.php';
+            $configurationFiles[] = $package->getPackagePath() . 'Configuration/Commands.php';
+        }
+
+        $configurationFiles[] = dirname(__DIR__) . '/config/commands.php';
+
+        foreach ($configurationFiles as $commandsOfExtension) {
             if (@is_file($commandsOfExtension)) {
                 /*
                  * We use require instead of require_once here because it eases the testability as require_once returns
