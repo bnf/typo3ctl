@@ -8,6 +8,11 @@
         "php": "^7.2",
         "bnf/typo3ctl-commands": "~0.1.0"
     },
+    "autoload": {
+        "psr-4": {
+            "Bnf\\TYPO3Ctl\\": "src/"
+        }
+    },
     "bin": [
         "typo3ctl"
     ]
