@@ -19,7 +19,6 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use TYPO3\CMS\Core\Authentication\CommandLineUserAuthentication;
-use TYPO3\CMS\Core\Console\CommandRegistry;
 use TYPO3\CMS\Core\Console\CommandRequestHandler;
 use TYPO3\CMS\Core\Core\Bootstrap;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -64,7 +63,7 @@ class MaintenanceCommandRequestHandler extends CommandRequestHandler
      */
     protected function populateAvailableCommands()
     {
-        $commands = GeneralUtility::makeInstance(CommandRegistry::class, null);
+        $commands = GeneralUtility::makeInstance(MaintenanceCommandRegistry::class, null);
 
         foreach ($commands as $commandName => $command) {
             $this->application->add($command);
