@@ -6,6 +6,11 @@ return [
         'maintenance' => true,
         'schedulable' => false,
     ],
+    'prepare:folderstructure' => [
+        'class' => \Bnf\TYPO3Ctl\Command\PrepareFolderStructureCommand::class,
+        'maintenance' => true,
+        'schedulable' => false,
+    ],
     'cache:flush' => [
         'class' => \Bnf\TYPO3Ctl\Command\CacheFlushCommand::class,
         'maintenance' => true,
