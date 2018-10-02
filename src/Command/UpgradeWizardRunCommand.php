@@ -38,6 +38,9 @@ class UpgradeWizardRunCommand extends \TYPO3\CMS\Install\Command\UpgradeWizardRu
             $io->note('Upgrade wizards not yet available. Run the TYPO3 installation first.');
             return;
         }
-        return parent::execute($input, $output);
+        $ret = parent::execute($input, $output);
+        if ($ret !== null) {
+            return $ret;
+        }
     }
 }
