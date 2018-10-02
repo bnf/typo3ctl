@@ -17,9 +17,9 @@
  * Command Line Interface module dispatcher
  * that executes maintenance commands
  */
-call_user_func(function() use ($argv) {
+call_user_func(function() {
     $classLoader = require __DIR__ . '/../../autoload.php';
-    // Fake a path in public directory – currently required by TYPO3 SystemdEnvironmentBuilder
+    // Fake a path in public directory – currently required by TYPO3 SystemEnvironmentBuilder
     $_SERVER['argv'][0] = getenv('TYPO3_PATH_WEB') . '/typo3/sysext/core/bin/typo3';
     \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::run(4, \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::REQUESTTYPE_CLI);
     $container = \TYPO3\CMS\Core\Core\Bootstrap::init($classLoader, true);
