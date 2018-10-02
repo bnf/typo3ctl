@@ -43,8 +43,13 @@ class MaintenanceCommandRegistry extends CommandRegistry
         foreach ($this->packageManager->getActivePackages() as $package) {
             $configurationFiles[] = $package->getPackagePath() . 'Configuration/Commands.php';
         }
-
         $configurationFiles[] = dirname(__DIR__) . '/config/commands.php';
+
+        // Core commands that may be executed in maintenance mode
+        $whitelist = [
+            'upgrade:run',
+            'upgrade:list',
+        ];
 
         foreach ($configurationFiles as $commandsOfExtension) {
             if (@is_file($commandsOfExtension)) {
@@ -58,7 +63,7 @@ class MaintenanceCommandRegistry extends CommandRegistry
                     foreach ($commands as $commandName => $commandConfig) {
                         // tri-state: true (bool), false (bool, default), not-exclusive (string)
                         $isMaintenanceCommand = $commandConfig['maintenance'] ?? false;
-                        if ($isMaintenanceCommand !== $this->maintenanceMode && $isMaintenanceCommand !== 'not-exclusive') {
+                        if ($isMaintenanceCommand !== $this->maintenanceMode && $isMaintenanceCommand !== 'not-exclusive' && !in_array($commandName, $whitelist)) {
                             continue;
                         }
                         if (array_key_exists($commandName, $this->commands)) {
