@@ -64,12 +64,13 @@ class DumpPackageStatesCommand extends Command
         if (!is_dir($configPath)) {
             GeneralUtility::mkdir_deep($configPath);
         }
+
         $packages = $packageManager->getAvailablePackages();
         \Closure::bind(function () use ($packages) {
             foreach ($packages as $package) {
                 $this->registerActivePackage($package);
             }
-        }, $packageManager);
+        }, $packageManager, PackageManager::class)();
         $packageManager->forceSortAndSavePackageStates();
         $io->success('The file PackageStates.php has been updated.');
     }
