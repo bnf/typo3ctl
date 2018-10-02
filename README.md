@@ -2,7 +2,7 @@
 
 `typo3ctl` is a lightweight replacement for `helhum/typo3-console` for maintenance related tasks.
 
-Do **not** use this package in production yet. It is supposed to be merged into `typo3/cms-cli` in near future (and later to `typo3/cms-core`).
+Do **not** use this package in production yet. This package is a proposal with the intention to merged into `typo3/cms-cli` in near future (and later to `typo3/cms-core`).
 
 ## Installation
 
