@@ -16,4 +16,9 @@ return [
         'maintenance' => true,
         'schedulable' => false,
     ],
+    'database:migrate' => [
+        'class' => \Bnf\TYPO3Ctl\Command\DatabaseUpdateCommand::class,
+        'maintenance' => true,
+        'schedulable' => false,
+    ],
 ];
