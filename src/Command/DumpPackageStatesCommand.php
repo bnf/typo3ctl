@@ -60,6 +60,10 @@ class DumpPackageStatesCommand extends Command
             throw new \TYPO3\CMS\Core\Exception(self::class . ' can only be executed in failsafe mode', 1536919047);
         }
 
+        $configPath = Environment::getLegacyConfigPath();
+        if (!is_dir($configPath)) {
+            GeneralUtility::mkdir_deep($configPath);
+        }
         $packages = $packageManager->getAvailablePackages();
         \Closure::bind(function () use ($packages) {
             foreach ($packages as $package) {
