@@ -19,6 +19,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Core\Bootstrap;
 use TYPO3\CMS\Core\Database\Schema\Exception\StatementException;
 use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
 use TYPO3\CMS\Core\Database\Schema\SqlReader;
@@ -39,6 +40,17 @@ class DatabaseUpdateCommand extends Command
     }
 
     /**
+     * Bootstrap running of database update
+     */
+    protected function bootstrap()
+    {
+        Bootstrap::loadTypo3LoadedExtAndExtLocalconf(false);
+        Bootstrap::unsetReservedGlobalVariables();
+        Bootstrap::loadBaseTca(false);
+        Bootstrap::loadExtTables(false);
+    }
+
+    /**
      * Clear caches
      *
      * @inheritdoc
@@ -50,6 +62,16 @@ class DatabaseUpdateCommand extends Command
         if (empty($GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'] ?? [])) {
             $io->note('Skipping database migration. No database connection configured.');
             return;
+        }
+
+        try {
+            $this->bootstrap();
+        } catch (\Throwable $e) {
+            $io->error([
+                'Failed to load ext_localconf.php and ext_tables.php files: ' . $e->getMessage(),
+                $e->getFile() . ' (' . $e->getLine() . ')'
+            ]);
+            return 1;
         }
 
         $statementHashesToPerform = [];
