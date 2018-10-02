@@ -20,7 +20,6 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-
 /**
  * Basic service to clear caches within the install tool.
  * This is NOT an API class, it is for internal use in the install tool only.

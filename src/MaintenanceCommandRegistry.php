@@ -15,7 +15,6 @@ namespace Bnf\TYPO3Ctl;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Symfony\Component\Console\Command\Command;
 use TYPO3\CMS\Core\Console\CommandNameAlreadyInUseException;
 use TYPO3\CMS\Core\Console\CommandRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
