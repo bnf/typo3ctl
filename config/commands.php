@@ -21,4 +21,14 @@ return [
         'maintenance' => true,
         'schedulable' => false,
     ],
+    'upgrade:run' => [
+        'class' => \Bnf\TYPO3Ctl\Command\UpgradeWizardRunCommand::class,
+        'maintenance' => true,
+        'schedulable' => false,
+    ],
+    'upgrade:list' => [
+        'class' => \Bnf\TYPO3Ctl\Command\UpgradeWizardListCommand::class,
+        'maintenance' => true,
+        'schedulable' => false,
+    ]
 ];
