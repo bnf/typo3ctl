@@ -48,7 +48,8 @@ class PrepareFolderStructureCommand extends Command
         $folderStructureFactory = GeneralUtility::makeInstance(DefaultFactory::class);
         $structureFacade = $folderStructureFactory->getStructure();
         $fixedStatusObjects = $structureFacade->fix();
-
-        $io->success('All folders have been prepared.');
+        foreach ($fixedStatusObjects as $message) {
+            $io->writeLn($message->getTitle());
+        }
     }
 }
