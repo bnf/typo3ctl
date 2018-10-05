@@ -34,17 +34,17 @@ class MaintenanceCommandRegistry extends CommandRegistry
      */
     protected function populateCommandsFromPackages()
     {
-        if ($this->commands) {
+        if (!empty($this->commands)) {
             return;
         }
 
         $configurationFiles = [];
         foreach ($this->packageManager->getActivePackages() as $package) {
-            $configurationFiles[] = $package->getPackagePath() . 'Configuration/Commands.php';
+            $configurationFiles[$package->getPackageKey()] = $package->getPackagePath() . 'Configuration/Commands.php';
         }
         $configurationFiles[] = dirname(__DIR__) . '/config/commands.php';
 
-        foreach ($configurationFiles as $commandsOfExtension) {
+        foreach ($configurationFiles as $packageKey => $commandsOfExtension) {
             if (@is_file($commandsOfExtension)) {
                 /*
                  * We use require instead of require_once here because it eases the testability as require_once returns
@@ -61,7 +61,7 @@ class MaintenanceCommandRegistry extends CommandRegistry
                         }
                         if (array_key_exists($commandName, $this->commands)) {
                             throw new CommandNameAlreadyInUseException(
-                                'Command "' . $commandName . '" registered by "' . $package->getPackageKey() . '" is already in use',
+                                'Command "' . $commandName . '" registered by "' . $packageKey . '" is already in use',
                                 1484486383
                             );
                         }
