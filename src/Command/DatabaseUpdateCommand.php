@@ -15,6 +15,8 @@ namespace Bnf\TYPO3Ctl\Command;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\ConnectionException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -41,13 +43,99 @@ class DatabaseUpdateCommand extends Command
 
     /**
      * Bootstrap running of database update
+     *
+     * @param SymfonyStyle $io
+     * @return bool
      */
-    protected function bootstrap()
+    protected function bootstrap(SymfonyStyle $io): bool
     {
-        Bootstrap::loadTypo3LoadedExtAndExtLocalconf(false);
-        Bootstrap::unsetReservedGlobalVariables();
-        Bootstrap::loadBaseTca(false);
-        Bootstrap::loadExtTables(false);
+        try {
+            Bootstrap::loadTypo3LoadedExtAndExtLocalconf(false);
+            Bootstrap::unsetReservedGlobalVariables();
+            Bootstrap::loadBaseTca(false);
+            Bootstrap::loadExtTables(false);
+        } catch (\Throwable $e) {
+            $io->error([
+                'Failed to load ext_localconf.php and ext_tables.php files: ' . $e->getMessage(),
+                $e->getFile() . ' (' . $e->getLine() . ')'
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param SchemaMigrator $schemaMigrationService
+     * @param array $sqlStatements
+     * @return array of keys that
+     */
+    protected function getStatementHashesToPerform(SchemaMigrator $schemaMigrationService, array $sqlStatements): array
+    {
+        $statementHashesToPerform = [];
+        $addCreateChange = $schemaMigrationService->getUpdateSuggestions($sqlStatements);
+        foreach ($addCreateChange as $connection => $changes) {
+            foreach ($changes as $type => $statements) {
+                foreach ($statements as $hash => $statement) {
+                    $statementHashesToPerform[] = $hash;
+                }
+            }
+        }
+        return array_flip($statementHashesToPerform) ?? [];
+    }
+
+    /**
+     * @param array $results
+     * @param SymfonyStyle $io
+     * @return bool
+     */
+    protected function hasMigrationFailed(array $results, SymfonyStyle $io)
+    {
+        $hasFailed = false;
+        // Create error flash messages if any
+        foreach ($results as $errorMessage) {
+            $io->error('Database update failed: ' . $errorMessage);
+            $hasFailed = true;
+        }
+        return $hasFailed;
+    }
+
+    /**
+     * @param SymfonyStyle $io
+     * @return int
+     */
+    protected function performMigration(SymfonyStyle $io): int
+    {
+        $sqlReader = GeneralUtility::makeInstance(SqlReader::class);
+        $schemaMigrationService = GeneralUtility::makeInstance(SchemaMigrator::class);
+
+        try {
+            $sqlStatements = $sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString());
+            $statementHashesToPerform = $this->getStatementHashesToPerform($schemaMigrationService, $sqlStatements);
+            if (empty($statementHashesToPerform)) {
+                $io->success('No migration required.');
+                return 0;
+            }
+
+            $results = $schemaMigrationService->migrate($sqlStatements, $statementHashesToPerform);
+            if ($this->hasMigrationFailed($results, $io)) {
+                return 1;
+            }
+        } catch (ConnectionException $e) {
+            // No database available, fail silenty
+            $io->note('Skipping database migration. Connection can not be established.');
+            return 0;
+        } catch (DBALException $e) {
+            $io->error('Database analysis failed: ' . $e->getMessage());
+            return 1;
+        } catch (StatementException $e) {
+            $io->error('Database analysis failed: ' . $e->getMessage());
+            return 1;
+        }
+
+        $io->success('Database has been migrated.');
+
+        return 0;
     }
 
     /**
@@ -64,59 +152,10 @@ class DatabaseUpdateCommand extends Command
             return;
         }
 
-        try {
-            $this->bootstrap();
-        } catch (\Throwable $e) {
-            $io->error([
-                'Failed to load ext_localconf.php and ext_tables.php files: ' . $e->getMessage(),
-                $e->getFile() . ' (' . $e->getLine() . ')'
-            ]);
+        if (!$this->bootstrap($io)) {
             return 1;
         }
 
-        $statementHashesToPerform = [];
-
-        try {
-            $sqlReader = GeneralUtility::makeInstance(SqlReader::class);
-            $sqlStatements = $sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString());
-            $schemaMigrationService = GeneralUtility::makeInstance(SchemaMigrator::class);
-            $addCreateChange = $schemaMigrationService->getUpdateSuggestions($sqlStatements);
-
-            foreach ($addCreateChange as $connection => $changes) {
-                foreach ($changes as $type => $statements) {
-                    foreach ($statements as $hash => $statement) {
-                        $statementHashesToPerform[] = $hash;
-                    }
-                }
-            }
-
-            $results = $schemaMigrationService->migrate($sqlStatements, array_flip($statementHashesToPerform));
-
-            // Create error flash messages if any
-            $failed = false;
-            foreach ($results as $errorMessage) {
-                $failed = true;
-                $io->error('Database update failed: ' . $errorMessage);
-            }
-            if ($failed) {
-                return 1;
-            }
-        } catch (\Doctrine\DBAL\Exception\ConnectionException $e) {
-            // No database available, fail silenty
-            $io->note('Skipping database migration. Connection can not be established.');
-            return 0;
-        } catch (StatementException $e) {
-            $io->error('Database analysis failed: ' . $e->getMessage());
-            return 1;
-        } catch (\Doctrine\DBAL\DBALException $e) {
-            $io->error('Database analysis failed: ' . $e->getMessage());
-            return 1;
-        }
-
-        if (empty($statementHashesToPerform)) {
-            $io->success('No migration required.');
-        } else {
-            $io->success('Database has been migrated.');
-        }
+        return $this->performMigration($io);
     }
 }
