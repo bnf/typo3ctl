@@ -38,38 +38,54 @@ class MaintenanceCommandRegistry extends CommandRegistry
             return;
         }
 
-        $configurationFiles = [];
-        foreach ($this->packageManager->getActivePackages() as $package) {
-            $configurationFiles[$package->getPackageKey()] = $package->getPackagePath() . 'Configuration/Commands.php';
+        $configuration = $this->getConfiguration();
+        foreach ($configuration as $packageKey => $commands) {
+            foreach ($commands as $commandName => $commandConfig) {
+                if (!$this->isRegisteredForCurrentMode($commandConfig)) {
+                    continue;
+                }
+                if (array_key_exists($commandName, $this->commands)) {
+                    throw new CommandNameAlreadyInUseException(
+                        'Command "' . $commandName . '" registered by "' . $packageKey . '" is already in use',
+                        1484486383
+                    );
+                }
+                $this->commands[$commandName] = GeneralUtility::makeInstance($commandConfig['class'], $commandName);
+                $this->commandConfigurations[$commandName] = $commandConfig;
+            }
         }
-        $configurationFiles[] = dirname(__DIR__) . '/config/commands.php';
+    }
 
-        foreach ($configurationFiles as $packageKey => $commandsOfExtension) {
-            if (@is_file($commandsOfExtension)) {
-                /*
-                 * We use require instead of require_once here because it eases the testability as require_once returns
-                 * a boolean from the second execution on. As this class is a singleton, this require is only called
-                 * once per request anyway.
-                 */
-                $commands = require $commandsOfExtension;
+    /**
+     * @return array
+     */
+    protected function getConfiguration(): array
+    {
+        $configuration = [];
+        foreach ($this->packageManager->getActivePackages() as $package) {
+            $filename =  $package->getPackagePath() . 'Configuration/Commands.php';
+            if (@is_file($filename)) {
+                $commands = require $filename;
                 if (is_array($commands)) {
-                    foreach ($commands as $commandName => $commandConfig) {
-                        // tri-state: true (bool), false (bool, default), not-exclusive (string)
-                        $isMaintenanceCommand = $commandConfig['maintenance'] ?? false;
-                        if ($isMaintenanceCommand !== $this->maintenanceMode && $isMaintenanceCommand !== 'not-exclusive') {
-                            continue;
-                        }
-                        if (array_key_exists($commandName, $this->commands)) {
-                            throw new CommandNameAlreadyInUseException(
-                                'Command "' . $commandName . '" registered by "' . $packageKey . '" is already in use',
-                                1484486383
-                            );
-                        }
-                        $this->commands[$commandName] = GeneralUtility::makeInstance($commandConfig['class'], $commandName);
-                        $this->commandConfigurations[$commandName] = $commandConfig;
-                    }
+                    $configuration[$package->getPackageKey()] = $commands;
                 }
             }
         }
+        $configuration['bnf/typo3ctl'] = require dirname(__DIR__) . '/config/commands.php';
+
+        return $configuration;
+    }
+
+    /**
+     * @param array
+     */
+    protected function isRegisteredForCurrentMode(array $commandConfig): bool
+    {
+        // tri-state: true (bool), false (bool, default), not-exclusive (string)
+        $isMaintenanceCommand = $commandConfig['maintenance'] ?? false;
+        if ($isMaintenanceCommand === 'not-exclusive') {
+            return true;
+        }
+        return $isMaintenanceCommand === $this->maintenanceMode;
     }
 }
