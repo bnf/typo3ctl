@@ -19,15 +19,20 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use TYPO3\CMS\Core\Authentication\CommandLineUserAuthentication;
-use TYPO3\CMS\Core\Console\CommandRequestHandler;
 use TYPO3\CMS\Core\Core\Bootstrap;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Command Line Interface Request Handler dealing with registered commands.
  */
-class MaintenanceCommandRequestHandler extends CommandRequestHandler
+class MaintenanceCommandRequestHandler
 {
+    /**
+     * Instance of the symfony application
+     * @var Application
+     */
+    protected $application;
+
     /**
      * Constructor initializing the symfony application
      */
