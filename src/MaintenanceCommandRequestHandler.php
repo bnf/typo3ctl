@@ -40,8 +40,9 @@ class MaintenanceCommandRequestHandler extends CommandRequestHandler
      * Handles any commandline request
      *
      * @param InputInterface $input
+     * @return int
      */
-    public function handleRequest(InputInterface $input)
+    public function handleRequest(InputInterface $input): int
     {
         $output = new ConsoleOutput();
 
@@ -53,8 +54,7 @@ class MaintenanceCommandRequestHandler extends CommandRequestHandler
 
         $this->populateAvailableCommands();
 
-        $exitCode = $this->application->run($input, $output);
-        exit($exitCode);
+        return $this->application->run($input, $output);
     }
 
     /**
