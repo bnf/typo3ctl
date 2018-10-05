@@ -66,11 +66,11 @@ class DumpPackageStatesCommand extends Command
         }
 
         $packages = $packageManager->getAvailablePackages();
-        \Closure::bind(function () use ($packages) {
+        \Closure::bind(function () use ($packageManager, $packages) {
             foreach ($packages as $package) {
-                $this->registerActivePackage($package);
+                $packageManager->registerActivePackage($package);
             }
-        }, $packageManager, PackageManager::class)();
+        }, null, PackageManager::class)();
         $packageManager->forceSortAndSavePackageStates();
         $io->success('The file PackageStates.php has been updated.');
     }
