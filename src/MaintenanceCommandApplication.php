@@ -32,15 +32,18 @@ class MaintenanceCommandApplication extends CommandApplication
      * Run the Symfony Console application in this TYPO3 application
      *
      * @param callable $execute
+     * @return int
      */
-    public function run(callable $execute = null)
+    public function run(callable $execute = null): int
     {
         $this->initializeContext();
         $handler = GeneralUtility::makeInstance(MaintenanceCommandRequestHandler::class);
-        $handler->handleRequest(new ArgvInput());
+        $exitCode = $handler->handleRequest(new ArgvInput());
 
         if ($execute !== null) {
             call_user_func($execute);
         }
+
+        return $exitCode;
     }
 }

@@ -54,7 +54,7 @@ class MaintenanceCommandRequestHandler extends CommandRequestHandler
         $this->populateAvailableCommands();
 
         $exitCode = $this->application->run($input, $output);
-        exit($exitCode);
+        return $exitCode;
     }
 
     /**
