@@ -36,11 +36,8 @@ class UpgradeWizardRunCommand extends \TYPO3\CMS\Install\Command\UpgradeWizardRu
         if (!@file_exists($configurationManager->getLocalConfigurationFileLocation())) {
             $io = new SymfonyStyle($input, $output);
             $io->note('Upgrade wizards not yet available. Run the TYPO3 installation first.');
-            return;
+            return 0;
         }
-        $ret = parent::execute($input, $output);
-        if ($ret !== null) {
-            return $ret;
-        }
+        return parent::execute($input, $output);
     }
 }
