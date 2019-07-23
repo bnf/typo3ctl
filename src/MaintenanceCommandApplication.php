@@ -15,8 +15,10 @@ namespace Bnf\TYPO3Ctl;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Input\ArgvInput;
 use TYPO3\CMS\Core\Console\CommandApplication;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -28,6 +30,11 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class MaintenanceCommandApplication extends CommandApplication
 {
+    public function __construct(ContainerInterface $container)
+    {
+        parent::__construct($container->get(Context::class));
+    }
+
     /**
      * Run the Symfony Console application in this TYPO3 application
      *
