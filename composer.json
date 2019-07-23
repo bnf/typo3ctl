@@ -1,7 +1,7 @@
 {
     "name": "bnf/typo3ctl",
     "description": "TYPO3 Maintenance Command Line Binary (experimental)",
-    "homepage": "https://bnfr.net",
+    "homepage": "https://bnf.dev",
     "license": ["GPL-2.0-or-later"],
     "require": {
         "php": "^7.2",
