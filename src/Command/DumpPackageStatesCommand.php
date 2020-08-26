@@ -73,5 +73,7 @@ class DumpPackageStatesCommand extends Command
         }, null, PackageManager::class)();
         $packageManager->forceSortAndSavePackageStates();
         $io->success('The file PackageStates.php has been updated.');
+
+        return 0;
     }
 }

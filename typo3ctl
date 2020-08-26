@@ -22,6 +22,9 @@ call_user_func(function() {
     // Fake a path in public directory – currently required by TYPO3 SystemEnvironmentBuilder
     $_SERVER['argv'][0] = getenv('TYPO3_PATH_WEB') . '/typo3/sysext/core/bin/typo3';
     \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::run(4, \TYPO3\CMS\Core\Core\SystemEnvironmentBuilder::REQUESTTYPE_CLI);
-    $container = \TYPO3\CMS\Core\Core\Bootstrap::init($classLoader, true);
-    exit((new \Bnf\TYPO3Ctl\MaintenanceCommandApplication($container))->run());
+    $container = new \Bnf\Di\Container(
+        [new \Bnf\TYPO3Ctl\ServiceProvider],
+        ['failsafe-typo3-container' => TYPO3\CMS\Core\Core\Bootstrap::init($classLoader, true)]
+   );
+   exit($container->get(\TYPO3\CMS\Core\Console\CommandApplication::class)->run());
 });

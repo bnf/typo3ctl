@@ -51,5 +51,6 @@ class PrepareFolderStructureCommand extends Command
         foreach ($fixedStatusObjects as $message) {
             $io->writeLn($message->getTitle());
         }
+        return 0;
     }
 }

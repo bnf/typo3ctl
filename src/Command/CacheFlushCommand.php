@@ -54,7 +54,7 @@ class CacheFlushCommand extends Command
             if (!$this->checkIfEssentialConfigurationExists()) {
                 $io->success('Default file caches have been flushed.');
                 // We are done here.
-                return;
+                return 0;
             }
         } else {
             // retrieve existing cachemanager instance
@@ -62,6 +62,7 @@ class CacheFlushCommand extends Command
             $cacheManager->flushCaches();
         }
         $io->success('All caches have been flushed.');
+        return 0;
     }
 
     /**

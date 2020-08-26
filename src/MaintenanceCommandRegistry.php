@@ -15,77 +15,115 @@ namespace Bnf\TYPO3Ctl;
  * The TYPO3 project - inspiring people to share!
  */
 
-use TYPO3\CMS\Core\Console\CommandNameAlreadyInUseException;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
+use Symfony\Component\Console\Exception\CommandNotFoundException;
 use TYPO3\CMS\Core\Console\CommandRegistry;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Registry for Symfony commands, populated from extensions
+ * Registry for Symfony commands, populated via ServiceProvider
  */
 class MaintenanceCommandRegistry extends CommandRegistry
 {
     /**
-     * @var bool
+     * @var ContainerInterface
      */
-    protected $maintenanceMode = true;
+    protected $container;
 
     /**
-     * @throws CommandNameAlreadyInUseException
+     * Map of command configurations with the command name as key
+     *
+     * @var array[]
      */
+    protected $commandConfigurations = [];
+
+    /**
+     * @param ContainerInterface $container
+     */
+    public function __construct(ContainerInterface $container)
+    {
+        $this->container = $container;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function has($name)
+    {
+        return array_key_exists($name, $this->commandConfigurations);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get($name)
+    {
+        try {
+            return $this->getCommandByIdentifier($name);
+        } catch (UnknownCommandException $e) {
+            throw new CommandNotFoundException($e->getMessage(), [], 1567969355, $e);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getNames()
+    {
+        return array_keys($this->commandConfigurations);
+    }
+
+    /**
+     * Get all commands which are allowed for scheduling recurring commands.
+     *
+     * @return \Generator
+     */
+    public function getSchedulableCommands(): \Generator
+    {
+        foreach ($this->commandConfigurations as $commandName => $configuration) {
+            if ($configuration['schedulable'] ?? true) {
+                yield $commandName => $this->getInstance($configuration['serviceName']);
+            }
+        }
+    }
+
+    /**
+     * @param string $identifier
+     * @throws UnknownCommandException
+     * @return Command
+     */
+    public function getCommandByIdentifier(string $identifier): Command
+    {
+        if (!isset($this->commandConfigurations[$identifier])) {
+            throw new UnknownCommandException(
+                sprintf('Command "%s" has not been registered.', $identifier),
+                1510906768
+            );
+        }
+
+        return $this->getInstance($this->commandConfigurations[$identifier]['serviceName']);
+    }
+
+    protected function getInstance(string $service): Command
+    {
+        return $this->container->get($service);
+    }
+
+    /**
+     * @internal
+     */
+    public function addLazyCommand(string $commandName, string $serviceName, bool $schedulable = true): void
+    {
+        $this->commandConfigurations[$commandName] = [
+            'serviceName' => $serviceName,
+            'schedulable' => $schedulable,
+        ];
+    }
+
+
+    /** @todo: Remove once we drop support for v10 */
     protected function populateCommandsFromPackages()
     {
-        if (!empty($this->commands)) {
-            return;
-        }
-
-        $configuration = $this->getConfiguration();
-        foreach ($configuration as $packageKey => $commands) {
-            foreach ($commands as $commandName => $commandConfig) {
-                if (!$this->isRegisteredForCurrentMode($commandConfig)) {
-                    continue;
-                }
-                if (array_key_exists($commandName, $this->commands)) {
-                    throw new CommandNameAlreadyInUseException(
-                        'Command "' . $commandName . '" registered by "' . $packageKey . '" is already in use',
-                        1484486383
-                    );
-                }
-                $this->commands[$commandName] = GeneralUtility::makeInstance($commandConfig['class'], $commandName);
-                $this->commandConfigurations[$commandName] = $commandConfig;
-            }
-        }
-    }
-
-    /**
-     * @return array
-     */
-    protected function getConfiguration(): array
-    {
-        $configuration = [];
-        foreach ($this->packageManager->getActivePackages() as $package) {
-            $filename =  $package->getPackagePath() . 'Configuration/Commands.php';
-            if (@is_file($filename)) {
-                $commands = require $filename;
-                if (is_array($commands)) {
-                    $configuration[$package->getPackageKey()] = $commands;
-                }
-            }
-        }
-        $configuration['bnf/typo3ctl'] = require dirname(__DIR__) . '/config/commands.php';
-
-        return $configuration;
-    }
-
-    /**
-     * @param array
-     */
-    protected function isRegisteredForCurrentMode(array $commandConfig): bool
-    {
-        // tri-state: true (bool), false (bool, default), not-exclusive (string)
-        $isMaintenanceCommand = $commandConfig['maintenance'] ?? false;
-        if ($isMaintenanceCommand === 'not-exclusive') {
-            return true;
-        }
-        return $isMaintenanceCommand === $this->maintenanceMode;
     }
 }
